@@ -1,0 +1,81 @@
+/* ПРАКТИЧЕСКОЕ ЗАНЯТИЕ № 16 
+   Тема: Создание и управление индексами 
+*/
+
+USE productsdb;
+GO
+
+-- =============================================
+-- 1. ПОДГОТОВКА И ВКЛЮЧЕНИЕ СТАТИСТИКИ
+-- =============================================
+
+-- Включаем отображение времени выполнения и операций ввода-вывода
+-- Это нужно для сравнения производительности "ДО" и "ПОСЛЕ" индекса
+SET STATISTICS IO ON;
+SET STATISTICS TIME ON;
+GO
+
+-- =============================================
+-- 2. КЛАСТЕРИЗОВАННЫЙ ИНДЕКС (Clustered Index)
+-- =============================================
+/* Внимание: У таблицы может быть только ОДИН такой индекс. 
+   Он обычно создается автоматически для первичного ключа (Primary Key).
+*/
+
+-- Создаем индекс по Коду товара
+CREATE CLUSTERED INDEX IX_Products_ProductId 
+ON Products (Id); 
+GO
+
+-- Тестовый запрос (замените 'Samsung' на производителя, который есть в вашей базе)
+SELECT Id, ProductName, ProductCount, Price 
+FROM Products 
+WHERE Manufacturer = 'Samsung';
+GO
+
+
+-- =============================================
+-- 3. НЕКЛАСТЕРИЗОВАННЫЙ ИНДЕКС (Non-Clustered Index)
+-- =============================================
+-- Создаем индекс для поля "Производитель", чтобы ускорить поиск по нему
+CREATE NONCLUSTERED INDEX IX_Products_Manufacturer 
+ON Products (Manufacturer);
+GO
+
+-- Снова выполняем тот же запрос и сравниваем показатели в окне "Messages" (Сообщения)
+SELECT Id, ProductName, ProductCount, Price 
+FROM Products 
+WHERE Manufacturer = 'Samsung';
+GO
+
+
+-- =============================================
+-- 4. ОПТИМИЗАЦИЯ ИНДЕКСОВ
+-- =============================================
+
+-- 4.1. Проверка степени фрагментации (насколько данные "разбросаны")
+SELECT name AS IndexName, 
+       avg_fragmentation_in_percent 
+FROM sys.dm_db_index_physical_stats(DB_ID(), OBJECT_ID('Products'), NULL, NULL, 'DETAILED') AS stats
+JOIN sys.indexes AS idx ON stats.object_id = idx.object_id AND stats.index_id = idx.index_id;
+GO
+
+-- 4.2. Реорганизация индекса (если фрагментация < 30%)
+ALTER INDEX IX_Products_Manufacturer ON Products REORGANIZE;
+GO
+
+-- 4.3. Перестроение индекса (если фрагментация > 30%)
+ALTER INDEX IX_Products_Manufacturer ON Products REBUILD;
+GO
+
+
+-- =============================================
+-- 5. ПРОСМОТР ВСЕХ ИНДЕКСОВ ТАБЛИЦЫ
+-- =============================================
+EXEC sp_helpindex 'Products';
+GO
+
+-- Отключаем статистику после работы
+SET STATISTICS IO OFF;
+SET STATISTICS TIME OFF;
+GO

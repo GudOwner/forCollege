@@ -1,0 +1,119 @@
+/* ПРАКТИЧЕСКОЕ ЗАНЯТИЕ № 15а 
+   Тема: Хранимые процедуры в БД SQL Server 
+*/
+
+USE productsdb;
+GO
+
+-- =============================================
+-- 1. ПРОСТАЯ ПРОЦЕДУРА (БЕЗ ПАРАМЕТРОВ)
+-- =============================================
+-- Создаем процедуру для вывода всех товаров 
+IF OBJECT_ID('GetAllProducts', 'P') IS NOT NULL DROP PROCEDURE GetAllProducts;
+GO
+CREATE PROCEDURE GetAllProducts
+AS
+BEGIN
+    SELECT * FROM Products;
+END;
+GO
+
+-- Вызов процедуры 
+EXEC GetAllProducts;
+GO
+
+
+-- =============================================
+-- 2. ПРОЦЕДУРА С ВХОДНЫМИ ПАРАМЕТРАМИ
+-- =============================================
+-- Процедура для добавления нового товара 
+IF OBJECT_ID('AddProduct', 'P') IS NOT NULL DROP PROCEDURE AddProduct;
+GO
+CREATE PROCEDURE AddProduct
+    @name NVARCHAR(100),
+    @manufacturer NVARCHAR(100),
+    @count INT,
+    @price MONEY
+AS
+BEGIN
+    INSERT INTO Products (ProductName, Manufacturer, ProductCount, Price)
+    VALUES (@name, @manufacturer, @count, @price);
+END;
+GO
+
+-- Вызов с именованными параметрами 
+EXEC AddProduct @name='iPhone 13', @manufacturer='Apple', @count=5, @price=75000;
+GO
+
+
+-- =============================================
+-- 3. ПРОЦЕДУРА С ПАРАМЕТРАМИ ПО УМОЛЧАНИЮ
+-- =============================================
+-- Если количество или цена не указаны, они будут приняты за 0 
+IF OBJECT_ID('AddProductWithDefaults', 'P') IS NOT NULL DROP PROCEDURE AddProductWithDefaults;
+GO
+CREATE PROCEDURE AddProductWithDefaults
+    @name NVARCHAR(100),
+    @manufacturer NVARCHAR(100),
+    @count INT = 0,
+    @price MONEY = 0
+AS
+BEGIN
+    INSERT INTO Products (ProductName, Manufacturer, ProductCount, Price)
+    VALUES (@name, @manufacturer, @count, @price);
+END;
+GO
+
+-- Вызов (указываем только обязательные поля) 
+EXEC AddProductWithDefaults 'Galaxy S21', 'Samsung';
+GO
+
+
+-- =============================================
+-- 4. ВЫХОДНЫЕ ПАРАМЕТРЫ (OUTPUT)
+-- =============================================
+-- Процедура возвращает ID добавленной записи через @id 
+IF OBJECT_ID('CreateProduct', 'P') IS NOT NULL DROP PROCEDURE CreateProduct;
+GO
+CREATE PROCEDURE CreateProduct
+    @name NVARCHAR(100),
+    @manufacturer NVARCHAR(100),
+    @count INT,
+    @price MONEY,
+    @id INT OUTPUT -- Выходной параметр 
+AS
+BEGIN
+    INSERT INTO Products (ProductName, Manufacturer, ProductCount, Price)
+    VALUES (@name, @manufacturer, @count, @price);
+    
+    SET @id = @@IDENTITY; -- Получаем последний ID 
+END;
+GO
+
+-- Вызов процедуры с получением результата 
+DECLARE @newId INT;
+EXEC CreateProduct 'LG V30', 'LG', 3, 28000, @id = @newId OUTPUT;
+PRINT 'ID нового товара: ' + CAST(@newId AS VARCHAR);
+GO
+
+
+-- =============================================
+-- 5. ИСПОЛЬЗОВАНИЕ ОПЕРАТОРА RETURN
+-- =============================================
+-- Возвращаем среднюю цену как целочисленный результат 
+IF OBJECT_ID('GetAvgPrice', 'P') IS NOT NULL DROP PROCEDURE GetAvgPrice;
+GO
+CREATE PROCEDURE GetAvgPrice
+AS
+BEGIN
+    DECLARE @avgPrice INT;
+    SELECT @avgPrice = AVG(Price) FROM Products;
+    RETURN @avgPrice; -- Возвращает только INT 
+END;
+GO
+
+-- Получение значения из RETURN 
+DECLARE @result INT;
+EXEC @result = GetAvgPrice;
+PRINT 'Средняя цена (целое число): ' + CAST(@result AS VARCHAR);
+GO

@@ -1,0 +1,77 @@
+/* Практическое занятие № 14а: Встроенные функции */
+
+USE productsdb; -- Используем вашу рабочую базу данных
+GO
+
+-- =============================================
+-- 1. СТРОКОВЫЕ ФУНКЦИИ
+-- =============================================
+
+-- 1.1. Преобразование регистра (UPPER, LOWER) [cite: 13, 14]
+SELECT ProductName, 
+       UPPER(ProductName) AS [Верхний регистр], 
+       LOWER(ProductName) AS [Нижний регистр]
+FROM TestTable;
+
+-- 1.2. Обрезка пробелов (LTRIM, RTRIM, TRIM) [cite: 11, 12, 15]
+-- Полезно для очистки данных перед сравнением
+SELECT '   Текст с пробелами   ' AS [Оригинал],
+       LEN(LTRIM('   Текст с пробелами   ')) AS [Длина после LTRIM],
+       TRIM('   Текст с пробелами   ') AS [Без пробелов];
+
+-- 1.3. Поиск и извлечение (LEFT, RIGHT, CHARINDEX) [cite: 6, 10, 16]
+SELECT ProductName,
+       LEFT(ProductName, 3) AS [Первые 3 символа],
+       CHARINDEX('о', ProductName) AS [Позиция буквы "о"]
+FROM TestTable;
+
+-- 1.4. Замена и повторение (REPLACE, REPLICATE) [cite: 7, 8]
+SELECT ProductName,
+       REPLACE(ProductName, 'Монитор', 'Дисплей') AS [Замена],
+       REPLICATE('*', 5) AS [Рейтинг];
+GO
+
+-- =============================================
+-- 2. ФУНКЦИИ ДАТЫ И ВРЕМЕНИ
+-- =============================================
+
+-- 2.1. Получение текущего времени (GETDATE, CURRENT_TIMESTAMP) [cite: 22, 23]
+SELECT GETDATE() AS [Текущая дата], 
+       SYSDATETIME() AS [Точное время];
+
+-- 2.2. Извлечение частей даты (DAY, MONTH, YEAR) [cite: 24, 25, 26]
+SELECT name AS [Таблица],
+       create_date AS [Дата создания],
+       DAY(create_date) AS [День],
+       MONTH(create_date) AS [Месяц],
+       YEAR(create_date) AS [Год]
+FROM sys.tables;
+
+-- 2.3. Добавление и разница дат (DATEADD, DATEDIFF) [cite: 27, 28]
+SELECT create_date AS [Дата создания],
+       DATEADD(month, 6, create_date) AS [Гарантия до (+6 мес)],
+       DATEDIFF(day, create_date, GETDATE()) AS [Дней с момента создания]
+FROM sys.tables;
+GO
+
+-- =============================================
+-- 3. МАТЕМАТИЧЕСКИЕ ФУНКЦИИ
+-- =============================================
+
+-- 3.1. Округление и модули (ROUND, ABS, CEILING, FLOOR) [cite: 31, 32, 33, 34]
+SELECT Price,
+       ROUND(Price, 0) AS [Округление],
+       CEILING(Price) AS [В большую сторону],
+       FLOOR(Price) AS [В меньшую сторону],
+       ABS(-Price) AS [Модуль цены]
+FROM TestTable;
+
+-- 3.2. Возведение в степень и корень (POWER, SQRT) [cite: 35, 36]
+SELECT Price,
+       POWER(Price, 2) AS [Цена в квадрате],
+       SQRT(Price) AS [Квадратный корень цены]
+FROM TestTable;
+
+-- 3.3. Генерация случайного числа (RAND) [cite: 37]
+SELECT RAND() AS [Случайное число от 0 до 1];
+GO
